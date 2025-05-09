@@ -1,21 +1,14 @@
-export interface Field {
-    id: string
+export interface Campo {
+    id?: number
     name: string
     dataType: 'string' | 'number' | 'boolean' | 'date'
-    createdAt: string
+    createdAt?: string
 }
 
-export interface Fill {
-    id: string
+export interface Preenchimento {
+    id?: number
     name: string
     fieldId: string
     value: string | number | boolean
-    createdAt: string
-}
-
-export enum datatype {
-    STRING = 'string',
-    NUMBER = 'number',
-    BOOLEAN = 'boolean',
-    DATE = 'date'
+    createdAt?: string
 }
