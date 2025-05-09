@@ -1,0 +1,27 @@
+{
+   "name": "teste_tecnico_backend",
+   "version": "0.0.1",
+   "description": "teste_tecnico_backend",
+   "type": "commonjs",
+   "devDependencies": {
+      "@types/cors": "^2.8.18",
+      "@types/express": "^5.0.1",
+      "@types/node": "^22.13.10",
+      "ts-node": "^10.9.2",
+      "ts-node-dev": "^2.0.0",
+      "typescript": "^5.8.2"
+   },
+   "dependencies": {
+      "cors": "^2.8.5",
+      "express": "^4.21.2",
+      "express-async-errors": "^3.1.1",
+      "mysql2": "^3.14.1",
+      "reflect-metadata": "^0.2.2",
+      "typeorm": "0.3.23"
+   },
+   "scripts": {
+      "build": "tsc",
+      "dev:server": "ts-node-dev src/server.ts",
+      "typeorm": "ts-node-dev ./node_modules/typeorm/cli.js"
+   }
+}
