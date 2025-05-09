@@ -1,50 +1,61 @@
-import { AppDataSource } from "../../database/data-source"
-
 import Campos from "../entities/Campos"
 import Preenchimento from "../entities/Preenchimento"
 
-const repository = AppDataSource.getRepository(Preenchimento);
-const camposRepository = AppDataSource.getRepository(Campos);
+import { AppDataSource } from "../../database/data-source"
+
+import IPreenchimentos from "../interfaces/IPreenchimentos"
 
 export default {
-    async createPreenchimento(data: { fieldId: number; value: any }) {
-        const campo = await camposRepository.findOneBy({ id: data.fieldId });
+    async createPreenchimento(data: { fieldId: number; value: any }): Promise<IPreenchimentos> {
+        const campoRepo = AppDataSource.getRepository(Campos);
+        const preenchimentoRepo = AppDataSource.getRepository(Preenchimento);
 
-        if (!campo) {
-            throw new Error("Campo não encontrado");
-        }
-
-        const value = data.value;
-
-        switch (campo.dataType) {
-            case "number":
-                if (isNaN(Number(value))) {
-                    throw new Error("Valor inválido para tipo number");
-                };
-                break;
-            case "boolean":
-                if (value !== "true" && value !== "false" && value !== true && value !== false) {
-                    throw new Error("Valor inválido para tipo boolean");
-                };
-                break;
-            case "date":
-                if (isNaN(Date.parse(value))) {
-                    throw new Error("Valor inválido para tipo date");
-                };
-                break;
-        }
-
-        const preenchimento = repository.create({
-            fieldId: data.fieldId,
-            value: value.toString(),
+        const campo = await campoRepo.findOne({ 
+            where: { id: data.fieldId } 
         });
 
-        await repository.save(preenchimento);
+        if (!campo) {
+            throw new Error("Campo não encontrado.");
+        }
 
-        return preenchimento;
+        let validatedValue: any;
+        try {
+
+            switch (campo.dataType) {
+                case 'number':
+                    validatedValue = Number(data.value);
+                    if (isNaN(validatedValue)) throw new Error("Valor inválido para tipo number.");
+                    break;
+                case 'boolean':
+                    validatedValue = String(data.value).toLowerCase() === 'true';
+                    if (data.value !== 'true' && data.value !== 'false') {
+                        throw new Error("Valor inválido para tipo boolean.");
+                    }
+                    break;
+                case 'date':
+                    validatedValue = new Date(data.value);
+                    if (isNaN(validatedValue.getTime())) throw new Error("Valor inválido para tipo date.");
+                    break;
+                default:
+                    validatedValue = String(data.value);
+            };
+
+        } catch (error) {
+            throw error;
+        };
+
+        const preenchimento = preenchimentoRepo.create({
+            fieldId: data.fieldId,
+            value: validatedValue.toString(),
+            campo: campo
+        });
+
+        return await preenchimentoRepo.save(preenchimento);
     },
 
-    async getPreenchimentos() {
-        return await repository.find();
+    async getPreenchimentos(): Promise<Preenchimento[]> {
+        return await AppDataSource.getRepository(Preenchimento).find({ 
+            relations: ['campo'] 
+        });
     }
 };

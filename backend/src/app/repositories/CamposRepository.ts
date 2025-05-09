@@ -1,27 +1,23 @@
 import Campos from "../entities/Campos"
+import ICampos from "../interfaces/ICampos"
 import { AppDataSource } from "../../database/data-source"
 
-const repository = AppDataSource.getRepository(Campos);
-
 export default {
-    async createCampo(data: { name: string; dataType: "string" | "number" | "boolean" | "date" }) {
-        const existing = await repository.findOneBy({ name: data.name });
-
-        if (existing) {
+    async createCampo(data: { name: string; datatype: string }): Promise<any> {
+        // Verifica se campo já existe
+        const existingCampo = await AppDataSource.getRepository(Campos).findOne({ 
+            where: { name: data.name } 
+        });
+        
+        if (existingCampo) {
             throw new Error("Já existe um campo com este nome");
         }
 
-        const novoCampo = repository.create({
-            name: data.name,
-            dataType: data.dataType,
-        });
-
-        await repository.save(novoCampo);
-
-        return novoCampo;
+        const campo = AppDataSource.getRepository(Campos).create(data);
+        return await AppDataSource.getRepository(Campos).save(campo);
     },
 
-    async getCampos() {
-        return await repository.find();
+    async getCampos(): Promise<ICampos[]> {
+        return await AppDataSource.getRepository(Campos).find();
     }
-};
+}
