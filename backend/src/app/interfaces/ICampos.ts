@@ -1,6 +1,13 @@
 export default interface ICampos {
     id?: number
     name: string
-    dataType: "string" | "number" | "boolean" | "date"
+    datatype: CampoDataType
     createdAt?: Date
+}
+
+export enum CampoDataType {
+    STRING = "string",
+    NUMBER = "number",
+    BOOLEAN = "boolean",
+    DATE = "date",
 }

@@ -1,7 +1,7 @@
 export interface Campo {
     id?: number
     name: string
-    dataType: 'string' | 'number' | 'boolean' | 'date'
+    datatype: 'string' | 'number' | 'boolean' | 'date'
     createdAt?: string
 }
 

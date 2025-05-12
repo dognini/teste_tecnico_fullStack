@@ -1,48 +1,32 @@
-import { Request, Response, Router } from "express"
+import { z } from 'zod'
+import { Request, Response } from 'express'
 
-import PreenchimentosRepository from "../repositories/PreenchimentosRepository"
+import PreenchimentosRepository from '../repositories/PreenchimentosRepository'
 
-const preenchimentoRouter = Router();
+const preenchimentoSchema = z.object({
+    fieldId: z.string().uuid(),
+    value: z.union([z.string(), z.number(), z.boolean(), z.date()])
+});
 
-preenchimentoRouter.post('/', async (req: Request, res: Response): Promise<any> => {
-    try {
-        if (!req.body.fieldId || req.body.value === undefined) {
-            return res.status(400).json({ error: "Campo e Valor são obrigatórios" });
+export class PreenchimentoController {
+    async create(req: Request, res: Response): Promise<any> {
+        try {
+            const validatedData = preenchimentoSchema.parse(req.body);
+            const preenchimento = await PreenchimentosRepository.createPreenchimento(validatedData);
+            
+            return res.status(201).json(preenchimento);
+        } catch (erro) {
+            return res.status(400).json({ error: (erro as Error).message });
         }
-
-        if (isNaN(Number(req.body.fieldId))) {
-            return res.status(400).json({ error: "ID de Campo deve ser um número" });
-        }
-
-        const preenchimento = await PreenchimentosRepository.createPreenchimento({
-            fieldId: Number(req.body.fieldId),
-            value: req.body.value
-        });
-
-        return res.status(201).json(preenchimento);
-    } catch (error: any) {
-        const errosPreenchimentos = [
-            "Campo não encontrado",
-            "Valor inválido para tipo number",
-            "Valor inválido para tipo boolean",
-            "Valor inválido para tipo date",
-        ];
-
-        if (errosPreenchimentos.includes(error.message)) {
-            return res.status(400).json({ error: error.message });
-        }
-
-        return res.status(500).json({ message: "Internal Server Error" });
     }
-});
 
-preenchimentoRouter.get('/', async (_req: Request, res: Response): Promise<any> => {
-    try {
-        const preenchimentos = await PreenchimentosRepository.getPreenchimentos();
-        return res.status(200).json(preenchimentos);
-    } catch (error) {
-        return res.status(500).json({ message: "Internal Server Error" });
-    };
-});
+    async getAll(req: Request, res: Response): Promise<any> {
+        try {
+            const preenchimentos = await PreenchimentosRepository.getPreenchimentos();
 
-export default preenchimentoRouter;
+            return res.json(preenchimentos);
+        } catch (erro) {
+            return res.status(500).json({ error: 'Erro ao buscar preenchimentos' });
+        }
+    }
+}

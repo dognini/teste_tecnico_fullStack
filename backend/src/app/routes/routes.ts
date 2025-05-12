@@ -1,11 +1,16 @@
 import { Router } from "express"
 
-import camposRouter from "../controllers/CamposController"
-import preenchimentoRouter from "../controllers/PreenchimentosController"
+import { CampoController } from "../controllers/CamposController"
+import { PreenchimentoController } from "../controllers/PreenchimentosController"
 
-const routes = Router();
+const router = Router();
+const campoController = new CampoController();
+const preenchimentoController = new PreenchimentoController();
 
-routes.use('/campos', camposRouter);
-routes.use('/preenchimentos', preenchimentoRouter);
+router.post('/campos', campoController.create.bind(campoController));
+router.get('/campos', campoController.getAll.bind(campoController));
 
-export default routes
+router.post('/preenchimentos', preenchimentoController.create.bind(preenchimentoController));
+router.get('/preenchimentos', preenchimentoController.getAll.bind(preenchimentoController));
+
+export default router

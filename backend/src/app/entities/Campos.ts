@@ -1,23 +1,18 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, OneToMany } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
 
-import Preenchimento from "./Preenchimento"
+import { CampoDataType } from "../interfaces/ICampos"
 
-@Entity("campos")
-class Campos {
-    @PrimaryGeneratedColumn('increment')
-    id: number;
+@Entity()
+export class Campos {
+    @PrimaryGeneratedColumn('uuid')
+    id: string
 
-    @Column({ type: "varchar", length: 300, nullable: false })
-    name: string;
+    @Column({ unique: true })
+    name: string
 
-    @Column({ type: "enum", enum: ["string", "number", "boolean", "date"], nullable: false })
-    dataType: "string" | "number" | "boolean" | "date";
+    @Column({ type: "enum" })
+    datatype: CampoDataType
 
-    @CreateDateColumn({ name: "created_at" })
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
-
-    @OneToMany(() => Preenchimento, preenchimento => preenchimento.campo)
-    preenchimentos: Preenchimento[];
-};
-
-export default Campos;
+}

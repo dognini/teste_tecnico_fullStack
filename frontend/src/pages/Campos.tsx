@@ -7,7 +7,7 @@ import { toast, ToastContainer } from 'react-toastify'
 
 import { Campo } from '@/interfaces/interfaces'
 
-const Campos: React.FC = () => {
+const Campos = () => {
     const [campos, setCampos] = useState<Campo[]>([]);
     const [loading, setLoading] = useState(false);
     const [newCampo, setNewCampo] = useState({
@@ -97,7 +97,7 @@ const Campos: React.FC = () => {
                             {campos.map((campo) => (
                                 <tr key={campo.id}>
                                     <td>{campo.name}</td>
-                                    <td>{campo.dataType}</td>
+                                    <td>{campo.datatype}</td>
                                     <td>{campo.createdAt ? new Date(campo.createdAt).toLocaleString() : 'Data não disponível'}</td>
                                 </tr>
                             ))}

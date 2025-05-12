@@ -13,31 +13,29 @@ const Preenchimentos = () => {
         fieldId: null,
         value: ''
     });
-
     const [loading, setLoading] = useState(false);
+    const [formLoading, setFormLoading] = useState(false);
 
     useEffect(() => {
-        getCampos();
-        getPreenchimentos();
+        const fetchData = async () => {
+            setLoading(true);
+
+            try {
+                const [camposResponse, preenchimentosResponse] = await Promise.all([
+                    axios.get('http://localhost:3333/campos'),
+                    axios.get('http://localhost:3333/preenchimentos')
+                ]);
+
+                setCampos(camposResponse.data);
+                setPreenchimentos(preenchimentosResponse.data);
+            } catch (error) {
+                toast.error('Erro ao carregar dados');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
-
-    const getCampos = async () => {
-        try {
-            const response = await axios.get('http://localhost:3333/campos');
-            setCampos(response?.data);
-        } catch (error) {
-            toast.error('Erro ao carregar campos');
-        };
-    };
-
-    const getPreenchimentos = async () => {
-        try {
-            const response = await axios.get('http://localhost:3333/preenchimentos');
-            setPreenchimentos(response?.data);
-        } catch (error) {
-            toast.error('Erro ao carregar preenchimentos');
-        };
-    };
 
     const handleValueChange = (value: string, datatype: string) => {
         let parsedValue: string | number | boolean = value;
@@ -53,58 +51,70 @@ const Preenchimentos = () => {
                     break;
                 case 'date':
                     if (isNaN(Date.parse(value))) throw new Error('Data inválida');
+                    parsedValue = new Date(value).toISOString();
                     break;
-            };
-
+                default:
+                    parsedValue = value;
+            }
+            
+            setNewPreenchimento(prev => ({ ...prev, value: parsedValue }));
         } catch (error) {
             toast.error('Valor não corresponde ao tipo do campo');
-            return;
-        };
-
-        setNewPreenchimento({ ...newPreenchimento, value: parsedValue });
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
 
+        if (!newPreenchimento.fieldId) {
+            toast.error('Selecione um campo');
+            return;
+        }
+
+        if (newPreenchimento.value === '') {
+            toast.error('Preencha um valor');
+            return;
+        }
+
+        setFormLoading(true);
         try {
             await axios.post('http://localhost:3333/preenchimentos', newPreenchimento);
             toast.success('Preenchimento salvo com sucesso!');
             setNewPreenchimento({ fieldId: null, value: '' });
-            await getPreenchimentos();
+
+            const response = await axios.get('http://localhost:3333/preenchimentos');
+            setPreenchimentos(response.data);
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Erro ao salvar preenchimento');
         } finally {
-            setLoading(false);
-        };
+            setFormLoading(false);
+        }
     };
 
     const getSelectedCampo = () => {
         return campos.find(c => c.id === newPreenchimento.fieldId);
     };
 
-    const campoTeste = getSelectedCampo();
-    console.log(campoTeste)
-    console.log("campos", campos)
-
     const renderValueInput = () => {
         const campo = getSelectedCampo();
 
         if (!campo) return null;
 
-        switch (campo.dataType) {
+        switch (campo.datatype) {
             case 'boolean':
                 return (
                     <select
                         value={newPreenchimento.value as string}
-                        onChange={(e) => setNewPreenchimento({ ...newPreenchimento, value: e.target.value === 'true' })}
+                        onChange={(e) => setNewPreenchimento({
+                            ...newPreenchimento,
+                            value: e.target.value === 'true'
+                        })}
                         className="form-select"
                         required
                     >
                         <option value="">Selecione</option>
-                        <option value="true">True</option>
-                        <option value="false">False</option>
+                        <option value="true">Verdadeiro</option>
+                        <option value="false">Falso</option>
                     </select>
                 );
             case 'date':
@@ -121,6 +131,7 @@ const Preenchimentos = () => {
                 return (
                     <input
                         type="number"
+                        step="any"
                         value={newPreenchimento.value as string}
                         onChange={(e) => handleValueChange(e.target.value, 'number')}
                         className="form-input"
@@ -132,12 +143,15 @@ const Preenchimentos = () => {
                     <input
                         type="text"
                         value={newPreenchimento.value as string}
-                        onChange={(e) => setNewPreenchimento({ ...newPreenchimento, value: e.target.value })}
+                        onChange={(e) => setNewPreenchimento({
+                            ...newPreenchimento,
+                            value: e.target.value
+                        })}
                         className="form-input"
                         required
                     />
                 );
-        };
+        }
     };
 
     return (
@@ -171,38 +185,42 @@ const Preenchimentos = () => {
                 <button
                     type="submit"
                     className="form-button"
-                    disabled={loading || !newPreenchimento.fieldId}
+                    disabled={formLoading || !newPreenchimento.fieldId}
                 >
-                    {loading ? 'Salvando...' : 'Salvar Preenchimento'}
+                    {formLoading ? 'Salvando...' : 'Salvar Preenchimento'}
                 </button>
             </form>
             <div>
                 <h2 className="form-title">Preenchimentos Existentes</h2>
-                <div className="table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Campo</th>
-                                <th>Tipo</th>
-                                <th>Valor</th>
-                                <th>Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {preenchimentos.map((p) => (
-                                <tr key={p.id}>
-                                    <td>{p?.name || p.fieldId}</td>
-                                    <td>{p?.value || '?'}</td>
-                                    <td>{String(p.value)}</td>
-                                    <td>{p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Data inválida'}</td>
+                {loading ? (
+                    <p>Carregando preenchimentos...</p>
+                ) : (
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Campo</th>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Data</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {preenchimentos.map((p) => (
+                                    <tr key={p.id}>
+                                        <td>{p?.name || p.fieldId}</td>
+                                        <td>{p?.value || '?'}</td>
+                                        <td>{String(p.value)}</td>
+                                        <td>{p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Data inválida'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-export default Preenchimentos;
+export default Preenchimentos
