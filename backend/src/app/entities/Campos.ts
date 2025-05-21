@@ -10,8 +10,13 @@ export class Campos {
     @Column({ unique: true })
     name: string
 
-    @Column({ type: "enum" })
-    datatype: CampoDataType
+    @Column({
+        type: "enum",
+        enum: CampoDataType,
+        enumName: "campo_data_type"
+    })
+    datatype: CampoDataType;
+
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
